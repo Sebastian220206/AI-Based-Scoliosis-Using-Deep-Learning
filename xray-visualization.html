@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X-ray to 3D Spine Visualization | ScolioAI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+
+
+<body>
+  <div id="dataset-panel">
+    <div class="dataset-header">
+      <h3>X-ray Dataset</h3>
+      <button onclick="toggleDataset()">✕</button>
+    </div>
+
+    <ul id="xray-list" class="xray-list">
+      <li>Loading X-ray images...</li>
+    </ul>
+  </div>
+
+  <header class="hero">
+    <nav class="navbar">
+      <div class="logo">ScolioAI</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="indexanalysis.html">Analyze X-ray</a></li>
+        <li><a href="Publish_Work.html">Published Work</a></li>
+        <li><a href="Team.html">Project Team</a></li>
+      </ul>
+    </nav>
+
+    <div class="hero-content">
+      <h1>X-ray to 3D Spine Visualization</h1>
+      <p>
+        An AI-assisted approach to convert spinal X-ray images into
+        a 3D-like curvature visualization for enhanced analysis and understanding.
+      </p>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Access Spinal X-ray</h2>
+      <p>Select a spinal X-ray image to generate a 3D visualization</p>
+    </div>
+
+    <div class="visualization-layout">
+
+      <div class="control-panel">
+
+        <h3>X-ray Input</h3>
+
+        <div class="xray-options">
+          <button class="secondary-btn" id="openDatasetBtn">
+            Access X-ray Dataset
+          </button>
+
+
+          <label class="upload-label">
+            Upload X-ray Image
+            <input type="file" id="xrayInput" accept="image/*" onchange="handleXrayUpload(event)">
+          </label>
+        </div>
+        <p id="xray-status" class="note"></p>
+
+        <img id="xray-preview" style="
+    display: none;
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    margin-top: 10px;
+    border-radius: 6px;
+  " />
+
+        <button class="primary-btn full-width" onclick="show3D()">
+          Generate 3D View
+        </button>
+
+        <p class="note">
+          Choose an X-ray from dataset or upload manually.
+        </p>
+
+      </div>
+
+    </div>
+
+
+  </section>
+  <section class="section light-bg">
+    <div class="section-header">
+      <h2>Generated Output</h2>
+      <p>AI-enhanced spinal curvature visualization</p>
+    </div>
+
+
+    <div class="output-placeholder">
+      3D Spine Visualization Output
+    </div>
+    <div id="ai-status" style="display:none; font-weight:bold; margin-top:15px;">
+      🧠 AI Reconstruction in Progress...
+    </div>
+
+    <div id="loader" style="display:none; margin-top:10px;">
+      <div class="spinner"></div>
+    </div>
+
+
+    <div id="three-container" style="width:100%; height:450px;  margin-top:30px;">
+    </div>
+  </section>
+
+
+  <footer class="footer">
+    <p>
+      ⚠ This visualization is for screening and educational purposes only.
+      Not a substitute for clinical diagnosis.
+    </p>
+    <script type="module" src="xray-3d.js"></script>
+
+</body>
+
+</html>

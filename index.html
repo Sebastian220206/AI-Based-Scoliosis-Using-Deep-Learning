@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>ScolioAI | AI-Based Scoliosis Detection</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+
+  <header class="header-v2">
+    <nav class="nav-container">
+      <div class="logo-group">
+        <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path d="M12 22V12" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M20 7L12 12L4 7" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="logo-text">
+          <span class="logo-main">ScolioAI</span>
+        </div>
+      </div>
+
+      <ul class="nav-v2">
+        <li><a href="index.html">HOME</a></li>
+        <li><a href="indexanalysis.html">3D VISUALIZATION</a></li>
+        <li><a href="Team.html">PROJECT TEAM</a></li>
+        <li><a href="Publish_Work.html">PUBLISHED WORK</a></li>
+      </ul>
+
+      <div class="header-actions">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Light/Dark Mode">
+          <span class="sun-icon">☀️</span>
+          <span class="moon-icon">🌙</span>
+        </button>
+        <a href="indexanalysis.html" class="contact-btn">ANALYZE NOW <span class="arrow">→</span></a>
+      </div>
+    </nav>
+  </header>
+  <script src="theme-toggle.js"></script>
+  <main class="hero-v2">
+    <div class="hero-v2-content">
+      <h1 class="main-title">
+        AI-Based<br>
+        Scoliosis<br>
+        Using Deep<br>
+        <span class="accent">Learning</span>
+      </h1>
+    </div>
+
+    <div class="hero-v2-visual">
+      <div class="abstract-spine">
+        <div class="glow-orb"></div>
+        <div class="digital-particles"></div>
+      </div>
+    </div>
+  </main>
+
+  <section id="video-showcase" class="section">
+    <div class="video-container">
+      <video id="demo-video" muted loop class="video-player">
+        <source src="video/What%20is%20Scoliosis%20surgery_.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </section>
+
+  <section id="types" class="section floating-types">
+    <div class="section-header">
+      <h2 class="platform-title">TYPES OF SCOLIOSIS</h2>
+      <p class="platform-subtitle">Comprehensive classification based on spinal curvature location.</p>
+    </div>
+
+    <div class="floating-cards-container">
+      <div class="floating-card-wrapper" style="--delay: 0s">
+        <div class="floating-card">
+          <div class="card-visual">
+            <img src="spine%20images/normal%20.jpeg" alt="Normal Healthy Spine" class="card-spine-img">
+          </div>
+          <div class="card-title">Healthy</div>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+      <div class="floating-card-wrapper" style="--delay: 1.5s">
+        <div class="floating-card active">
+          <div class="card-visual">
+            <img src="spine%20images/Thoracic.jpg.jpeg" alt="Thoracic Scoliosis" class="card-spine-img">
+          </div>
+          <div class="card-title">Thoracic Scoliosis</div>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+      <div class="floating-card-wrapper" style="--delay: 3s">
+        <div class="floating-card">
+          <div class="card-visual">
+            <img src="spine%20images/Lumbar.jpg.jpeg" alt="Lumbar Scoliosis" class="card-spine-img">
+          </div>
+          <div class="card-title">Lumbar Scoliosis</div>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+      <div class="floating-card-wrapper" style="--delay: 0.8s">
+        <div class="floating-card">
+          <div class="card-visual">
+            <img src="spine%20images/Thoracolumbar.jpg.jpeg" alt="Thoraco-Lumbar Scoliosis" class="card-spine-img">
+          </div>
+          <div class="card-title">Thoraco-Lumbar Scoliosis</div>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+      <div class="floating-card-wrapper" style="--delay: 2.2s">
+        <div class="floating-card">
+          <div class="card-visual">
+            <img src="spine%20images/double%20curve.jpg.jpeg" alt="Double Curve Scoliosis" class="card-spine-img">
+          </div>
+          <div class="card-title">Double Curve</div>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cobb" class="broadway-section">
+    <div class="broadway-container">
+      <div class="broadway-visual">
+        <div class="gauge-visual-area">
+          <div class="gauge-meter-container state-normal" id="cobb-gauge">
+            <!-- Pure CSS Gauge - no SVG needed -->
+            <div class="gauge-body">
+              <div class="gauge-segment seg-normal active" data-state="normal"></div>
+              <div class="gauge-segment seg-mild" data-state="mild"></div>
+              <div class="gauge-segment seg-moderate" data-state="moderate"></div>
+              <div class="gauge-segment seg-severe" data-state="severe"></div>
+              <div class="gauge-cover"></div>
+              <div class="gauge-needle-wrap">
+                <div class="gauge-needle"></div>
+              </div>
+              <div class="gauge-center-dot"></div>
+              <div class="gauge-labels">
+                <span class="gauge-label lbl-normal active">NORMAL</span>
+                <span class="gauge-label lbl-mild">MILD</span>
+                <span class="gauge-label lbl-moderate">MODERATE</span>
+                <span class="gauge-label lbl-severe">SEVERE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="broadway-content">
+        <div class="content-subtitle">Clinical Severity Classification</div>
+        <div class="classification-list">
+          <div class="class-item active" data-target="normal">
+            <h2 class="class-title">NORMAL</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Cobb Angle &lt; 10° — Perfect Alignment.</p>
+              <p>Complexity made simple — so you stay in control. At this stage, the spine shows no significant
+                curvature, representing optimal spinal health and skeletal symmetry.</p>
+              <p>We believe powerful diagnostic tools should be easy to use, providing peace of mind through precise
+                measurement.</p>
+            </div>
+          </div>
+          <div class="class-item" data-target="mild">
+            <h2 class="class-title">MILD</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Cobb Angle 10° – 25° — Early Detection.</p>
+              <p>Built for growth — designed for ambition. Mild scoliosis requires consistent clinical observation to
+                monitor potential progression during growth phases.</p>
+              <p>Early screening ensures that even subtle shifts are captured, allowing for proactive health management.
+              </p>
+            </div>
+          </div>
+          <div class="class-item" data-target="moderate">
+            <h2 class="class-title">MODERATE</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Cobb Angle 25° – 40° — Active Intervention.</p>
+              <p>Serious performance behind every click. Moderate cases often necessitate bracing or specialized
+                physical therapy to prevent further curvature increase.</p>
+              <p>Our platform provides high-precision tracking, delivering enterprise-grade stability for complex
+                clinical decisions.</p>
+            </div>
+          </div>
+          <div class="class-item" data-target="severe">
+            <h2 class="class-title">SEVERE</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Cobb Angle &gt; 40° — Clinical Priority.</p>
+              <p>Ultimate precision for critical outcomes. Severe scoliosis often requires surgical evaluation to
+                correct alignment and protect respiratory and cardiac function.</p>
+              <p>From automated detection to surgical planning, ScolioAI gives you unmatched capability and control at
+                your fingertips.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="impact" class="broadway-section">
+    <div class="broadway-container">
+      <div class="broadway-visual">
+        <div class="visual-state-container">
+          <div class="visual-state active" id="visual-risks">
+            <div class="shield-icon-container">
+              <div class="shield-body shield-danger">
+                <div class="shield-inner-white">
+                  <div class="shield-cross">+</div>
+                </div>
+                <div class="shield-glow shield-glow-red"></div>
+              </div>
+            </div>
+          </div>
+          <div class="visual-state" id="visual-precautions">
+            <div class="shield-icon-container">
+              <div class="shield-body">
+                <div class="shield-check">✓</div>
+                <div class="shield-glow"></div>
+              </div>
+              <div class="med-cross cross-1">+</div>
+              <div class="med-cross cross-2">+</div>
+              <div class="med-cross cross-3">+</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="broadway-content">
+        <div class="content-subtitle">Risk Mitigation & Clinical Guidance</div>
+        <div class="classification-list">
+          <div class="class-item impact-item active" data-target="risks">
+            <h2 class="class-title">RISKS</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Physiological & Structural Compromise.</p>
+              <p>Untreated spinal curvature poses significant long-term health challenges. Beyond physical aesthetics,
+                the structural impact can lead to systemic complications.</p>
+              <ul style="margin-top: 15px; list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: var(--accent-blue);">Pulmonary Stress:</strong> Reduced thoracic space impacting lung
+                  function.</li>
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: var(--accent-blue);">Chronic Pain:</strong> Nerve compression and persistent muscular
+                  fatigue.</li>
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: var(--accent-blue);">Mobility:</strong> Progressive loss of flexibility and structural
+                  balance.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="class-item impact-item" data-target="precautions">
+            <h2 class="class-title">SAFETY</h2>
+            <div class="class-desc">
+              <p class="desc-highlight">Evidence-Based Clinical Precautions.</p>
+              <p>Early detection is the primary defense against progression. Implementing a structured monitoring plan
+                ensures timely intervention and optimal outcomes.</p>
+              <ul style="margin-top: 15px; list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: #ff9d00;">Digital Screening:</strong> AI-powered periodic posture assessment.</li>
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: #ff9d00;">Physical Therapy:</strong> Target muscular strengthening and stabilization.
+                </li>
+                <li style="margin-bottom: 10px; color: var(--text-white); opacity: 0.9;">• <strong
+                    style="color: #ff9d00;">Clinical Oversight:</strong> Coordination with orthopedic specialists.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 ScolioAI | IEEE-Recognized Research Project</p>
+  </footer>
+  <script>
+    document.querySelectorAll('.floating-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = (y - centerY) / 10;
+        const rotateY = (centerX - x) / 10;
+
+        card.style.setProperty('--rx', `${rotateX}deg`);
+        card.style.setProperty('--ry', `${rotateY}deg`);
+
+        // Update glow position
+        const glow = card.querySelector('.card-glow');
+        glow.style.left = `${x}px`;
+        glow.style.top = `${y}px`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+      });
+    });
+
+    // Scoped Broadway Section Interaction
+    function initBroadwaySection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+
+      const items = section.querySelectorAll('.class-item');
+      const visualStates = section.querySelectorAll('.visual-state');
+      const gauge = section.querySelector('.gauge-meter-container');
+
+      items.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+          const target = item.getAttribute('data-target');
+
+          // Update Items in this section only
+          items.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          // Update Visuals in this section only
+          visualStates.forEach(v => v.classList.remove('active'));
+          const visualTarget = section.querySelector(`#visual-${target}`);
+          if (visualTarget) {
+            visualTarget.classList.add('active');
+          }
+
+          // Update Gauge if exists
+          if (gauge) {
+            gauge.classList.remove('state-normal', 'state-mild', 'state-moderate', 'state-severe');
+            gauge.classList.add(`state-${target}`);
+
+            const segments = gauge.querySelectorAll('.gauge-segment');
+            segments.forEach(seg => {
+              seg.classList.toggle('active', seg.getAttribute('data-state') === target);
+            });
+          }
+        });
+      });
+    }
+
+    initBroadwaySection('cobb');
+    initBroadwaySection('impact');
+
+    // Autoplay video when in viewport
+    const video = document.getElementById('demo-video');
+    if (video) {
+      const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            video.play().catch(error => console.log("Autoplay prevented:", error));
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.5 });
+      videoObserver.observe(video);
+    }
+  </script>
+
+</body>
+
+</html>

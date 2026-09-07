@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Resources | ScolioAI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg-body: #000000;
+      --bg-card: rgba(15, 15, 15, 0.6);
+      --text-white: #ffffff;
+      --text-grey: #a0a0a0;
+      --border: rgba(255, 255, 255, 0.1);
+      --radius: 20px;
+    }
+
+    body.light-mode {
+      --bg-body: #ffffff;
+      --bg-card: rgba(248, 250, 252, 0.8);
+      --text-white: #0f172a;
+      --text-grey: #475569;
+      --border: rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-white);
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding-top: 80px;
+    }
+
+    .hero-research {
+      padding: 120px 40px 80px;
+      text-align: center;
+      background: radial-gradient(circle at 50% 50%, #1a0505 0%, #000000 80%);
+    }
+
+    body.light-mode .hero-research {
+      background: #ffffff;
+    }
+
+    .hero-research h1 {
+      font-size: 6rem;
+      font-weight: 950;
+      letter-spacing: -4px;
+      line-height: 0.9;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      background: linear-gradient(to bottom, #ffffff 20%, var(--primary) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(37, 99, 235, 0.2));
+    }
+
+    body.light-mode .hero-research h1 {
+      background-image: linear-gradient(to bottom, var(--text-white) 20%, var(--primary) 80%);
+      filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.1));
+    }
+
+    .hero-research p {
+      max-width: 700px;
+      margin: 0 auto;
+      color: var(--text-grey);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .research-section {
+      padding: 100px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-title-group {
+      margin-bottom: 60px;
+      border-left: 4px solid var(--primary);
+      padding-left: 30px;
+    }
+
+    .section-title-group h2 {
+      font-size: 3rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    .section-title-group p {
+      color: var(--text-grey);
+      font-weight: 600;
+      margin-top: 5px;
+    }
+
+    .research-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 30px;
+    }
+
+    .academic-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(25px);
+      border-radius: var(--radius);
+      padding: 40px;
+      border: 1px solid var(--border);
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .academic-card:hover {
+      border-color: rgba(37, 99, 235, 0.4);
+      transform: translateY(-10px);
+      background: rgba(25, 25, 25, 0.7);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 25px;
+      object-fit: contain;
+      opacity: 0.8;
+      border-radius: 8px;
+    }
+
+    .academic-card h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .btn-research {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-white);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: auto;
+      transition: all 0.3s ease;
+    }
+
+    body.light-mode .btn-research {
+      background: rgba(0, 0, 0, 0.03);
+      color: #0f172a;
+    }
+
+    .btn-research:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .report-list-v2 {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 25px;
+    }
+
+    .report-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-grey);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .link-v2 {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.8rem;
+    }
+
+    .link-v2:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      background: transparent;
+      border-top: 1px solid var(--border);
+      color: var(--text-grey);
+      text-align: center;
+      padding: 60px 40px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+  </head>
+
+  <body>
+
+    <header class="header-v2">
+      <nav class="nav-container">
+        <div class="logo-group">
+          <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M12 22V12" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M20 7L12 12L4 7" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          <div class="logo-text">
+            <span class="logo-main">ScolioAI</span>
+          </div>
+        </div>
+
+        <ul class="nav-v2">
+          <li><a href="index.html">HOME</a></li>
+          <li><a href="indexanalysis.html">3D VISUALIZATION</a></li>
+          <li><a href="Team.html">PROJECT TEAM</a></li>
+          <li><a href="Publish_Work.html">PUBLISHED WORK</a></li>
+        </ul>
+
+        <div class="header-actions">
+          <button id="theme-toggle" class="theme-toggle" title="Toggle Light/Dark Mode">
+            <span class="sun-icon">☀️</span>
+            <span class="moon-icon">🌙</span>
+          </button>
+          <a href="indexanalysis.html" class="contact-btn">ANALYZE NOW <span class="arrow">→</span></a>
+        </div>
+    </nav>
+  </header>
+  <script src="theme-toggle.js"></script>
+
+    <section class="hero-research">
+      <h1>Published<br>Resources</h1>
+      <p>Centralized repository of presentations, published research papers, and academic reports developed during the
+        scoliosis detection project.</p>
+    </section>
+
+
+
+
+    <section class="research-section">
+      <div class="section-title-group">
+        <h2>Published Papers</h2>
+        <p>Research and review papers peer-reviewed and published.</p>
+      </div>
+
+      <div class="research-grid">
+        <div class="academic-card">
+          <img src="icons/pdf.jpg" class="card-icon">
+          <h3>IEEE Research Paper</h3>
+          <a href="papers/IEEE Paper.pdf" target="_blank" class="btn-research">View Publication</a>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/pdf.jpg" class="card-icon">
+          <h3>AIDCon 2025 Review Paper</h3>
+          <a href="papers/AIDCon Paper.pdf" target="_blank" class="btn-research">View Publication</a>
+        </div>
+      </div>
+    </section>
+
+
+
+
+    <section class="research-section">
+      <div class="section-title-group">
+        <h2>Academic Reports</h2>
+        <p>Project documentation submitted during curriculum milestones.</p>
+      </div>
+
+      <div class="research-grid">
+        <div class="academic-card">
+          <img src="icons/pdf.jpg" class="card-icon">
+          <h3>Primary Progress</h3>
+          <div class="report-list-v2">
+            <div class="report-item">
+              Micro Project Report
+              <a href="reports/Micro.pdf" target="_blank" class="link-v2">OPEN</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/pdf.jpg" class="card-icon">
+          <h3>Secondary Progress</h3>
+          <div class="report-list-v2">
+            <div class="report-item">
+              Mini Project Report
+              <a href="reports/Micro.pdf" target="_blank" class="link-v2">OPEN</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/pdf.jpg" class="card-icon">
+          <h3>Final Progress</h3>
+          <div class="report-list-v2">
+            <div class="report-item">
+              Major Project Report
+              <a href="reports/Micro.pdf" target="_blank" class="link-v2">OPEN</a>
+            </div>
+            <div class="report-item">
+              Final Project Thesis
+              <a href="reports/Micro.pdf" target="_blank" class="link-v2">OPEN</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="research-section">
+      <div class="section-title-group">
+        <h2>Project Presentations</h2>
+        <p>Deck slides prepared for various defense and conference phases.</p>
+      </div>
+
+      <div class="research-grid">
+        <div class="academic-card">
+          <img src="icons/ppt.jpeg" class="card-icon">
+          <h3>Problem Introduction</h3>
+          <a href="ppts/problem-statement.pdf" target="_blank" class="btn-research">View Slides</a>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/ppt.jpeg" class="card-icon">
+          <h3>Literature Review</h3>
+          <a href="ppts/review.pdf" target="_blank" class="btn-research">View Slides</a>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/ppt.jpeg" class="card-icon">
+          <h3>SIH 2025</h3>
+          <a href="ppts/SIH.pptx" target="_blank" class="btn-research">View Slides</a>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/ppt.jpeg" class="card-icon">
+          <h3>AIDCon 2025</h3>
+          <a href="ppts/AIDCon.pdf" target="_blank" class="btn-research">View Slides</a>
+        </div>
+
+        <div class="academic-card">
+          <img src="icons/ppt.jpeg" class="card-icon">
+          <h3>IEEE Conference</h3>
+          <a href="ppts/IEEE.pdf" target="_blank" class="btn-research">View Slides</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>© 2026 ScolioAI | Academic Research Archive</p>
+      <p style="margin-top: 10px; opacity: 0.5; font-size: 0.8rem;">All materials are shared strictly for educational
+        and reference purposes.</p>
+    </footer>
+
+
+  </body>
+
+</html>

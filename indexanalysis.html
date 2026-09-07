@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze X-ray | ScolioAI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-700: #1d4ed8;
+            --secondary: #60a5fa;
+            --bg-body: #000000;
+            --bg-card: rgba(15, 15, 15, 0.6);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --radius: 20px;
+            --shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            --accent-gold: #ff9d00;
+        }
+
+        body.light-mode {
+            --bg-body: #ffffff;
+            --bg-card: rgba(248, 250, 252, 0.8);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow-x: hidden;
+            padding-top: 80px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto 60px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .card:hover {
+            border-color: rgba(37, 99, 235, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            padding: 24px 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        body.light-mode .card-header {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .card-header h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-white);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        /* ─── Input Panel ─── */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.3s ease;
+            position: relative;
+            display: block;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        .preview-container {
+            position: relative;
+            margin-top: 24px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            min-height: 240px;
+            display: none;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #xrayPreview {
+            width: 100%;
+            display: block;
+            opacity: 0.9;
+        }
+
+        #annotationCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 20px;
+            margin-top: 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            background: var(--primary-700);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        /* ─── Output Panel ─── */
+        .viewport-container {
+            position: relative;
+            background: #050505;
+            border-radius: 16px;
+            height: 700px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        #three-container-analysis {
+            width: 100%;
+            height: 100%;
+        }
+
+        .results-overlay {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 280px;
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(25px);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            animation: slideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 100;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(40px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .metric {
+            margin-bottom: 24px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--text-white);
+            line-height: 1;
+        }
+
+        .metric-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-normal {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-mild {
+            background: rgba(234, 179, 8, 0.2);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .badge-moderate {
+            background: rgba(249, 115, 22, 0.2);
+            color: #fb923c;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .badge-severe {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* ─── Status/Loader ─── */
+        /* Centred progress ring: the SVG fills the panel and the readout sits
+           on top of it. Rotated -90deg so the arc starts at 12 o'clock. */
+        .status-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 156px;
+            height: 156px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .progress-ring {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .progress-ring .ring-track {
+            stroke: rgba(255, 255, 255, 0.08);
+        }
+
+        .progress-ring .ring-bar {
+            stroke: var(--primary);
+            stroke-linecap: round;
+            stroke-dasharray: 326.726;      /* 2 * PI * 52 */
+            stroke-dashoffset: 326.726;
+            transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 7px rgba(37, 99, 235, 0.65));
+        }
+
+        .progress-value {
+            position: relative;
+            font-size: 2.4rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -2px;
+            color: #fff;
+            font-variant-numeric: tabular-nums;   /* digits never jitter width */
+        }
+
+        .progress-value i {
+            font-style: normal;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0;
+            color: var(--text-muted);
+            margin-left: 3px;
+        }
+
+        .spinner-small {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(37, 99, 235, 0.3);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-viewport {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-viewport svg {
+            width: 80px;
+            height: 80px;
+            color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .empty-viewport p {
+            max-width: 300px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* ─── Viewport Controls ─── */
+        .viewport-controls {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .vp-btn {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .vp-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .vp-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer {
+            background: transparent;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header-v2">
+        <nav class="nav-container">
+            <div class="logo-group">
+                <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M12 22V12" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M20 7L12 12L4 7" stroke="#2563eb" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <div class="logo-text">
+                    <span class="logo-main">ScolioAI</span>
+                </div>
+            </div>
+
+            <ul class="nav-v2">
+                <li><a href="index.html">HOME</a></li>
+                <li><a href="indexanalysis.html">3D VISUALIZATION</a></li>
+                <li><a href="Team.html">PROJECT TEAM</a></li>
+                <li><a href="Publish_Work.html">PUBLISHED WORK</a></li>
+            </ul>
+
+            <div class="header-actions">
+                <button id="theme-toggle" class="theme-toggle" title="Toggle Light/Dark Mode">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
+                <a href="indexanalysis.html" class="contact-btn">ANALYZE NOW <span class="arrow">→</span></a>
+            </div>
+        </nav>
+    </header>
+    <script src="theme-toggle.js"></script>
+
+
+    <main class="dashboard">
+        <!-- ─── Left Panel: Clinical Input ─── -->
+        <div class="card">
+            <div class="card-header">
+                <h3><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg> Patient Analysis</h3>
+            </div>
+            <div class="card-body">
+                <label class="upload-zone" for="fileInput">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p style="margin-top: 12px; font-weight: 600;">Drop X-ray here or click to upload</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports DICOM, JPG, PNG
+                    </p>
+                    <input type="file" id="fileInput" accept="image/*">
+                </label>
+
+                <div class="preview-container" id="previewBox">
+                    <img id="xrayPreview" alt="X-ray Preview">
+                    <canvas id="annotationCanvas"></canvas>
+                </div>
+
+                <div id="fileInfo"
+                    style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); display: none;">
+                    ✅ <span id="fileName"></span>
+                </div>
+
+                <button class="analyze-btn" id="analyzeBtn" disabled>
+                    GENERATE 3D VIEW
+                </button>
+
+                <div id="errorMsg"
+                    style="margin-top: 16px; color: #1e40af; background: #eff6ff; padding: 12px; border-radius: 8px; font-size: 0.9rem; display: none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Right Panel: 3D Visualization ─── -->
+        <div class="card">
+            <div class="card-header">
+                <h3><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M21 16.5c0 .38-.21.71-.53.88l-7.97 4.44c-.31.17-.66.17-.97 0l-7.97-4.44c-.32-.17-.53-.5-.53-.88v-9c0-.38.21-.71.53-.88l7.97-4.44c.31-.17.66-.17.97 0l7.97 4.44c.32.17.53.5.53.88v9z" />
+                    </svg> Clinical 3D Spine Model</h3>
+                <div id="timeCounter" style="font-size: 0.85rem; color: var(--text-muted);">Real-time Reconstruction
+                </div>
+            </div>
+            <div class="viewport-container" id="viewport">
+                <div id="emptyState" class="empty-viewport">
+                    <svg fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+                        <path
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p>Select a patient X-ray and launch diagnostic to generate 3D model</p>
+                </div>
+
+                <div id="three-container-analysis"></div>
+
+                <div class="viewport-controls" id="viewportControls" style="display: none;">
+                    <button class="vp-btn" onclick="resetView()">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset View
+                    </button>
+                </div>
+
+                <div class="results-overlay" id="resultsCard">
+                    <div class="metric">
+                        <div class="metric-label">Cobb Angle</div>
+                        <div class="metric-value"><span id="cobbValue">0.0</span>°</div>
+                        <div class="metric-badge" id="severityBadge">Normal</div>
+                    </div>
+                    <div class="metric" style="margin-bottom: 0;">
+                        <div class="metric-label">Detected Curvature</div>
+                        <div id="curveType" style="font-weight: 600; color: #334155; margin-top: 4px;">Determining...
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+                            * Reconstructed from <span id="vertebraCount">0</span> anatomic points.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="status-panel" id="statusPanel">
+                    <svg class="progress-ring" viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="ring-track" cx="60" cy="60" r="52" />
+                        <circle class="ring-bar" id="progressBar" cx="60" cy="60" r="52" />
+                    </svg>
+                    <div class="progress-value"><span id="progressPct">0</span><i>%</i></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 ScolioAI | Clinical Assessment Platform</p>
+        <p style="margin-top: 10px; opacity: 0.6;">⚠ Clinical screening only. Not a medical substitute.</p>
+    </footer>
+
+    <!-- ═══ Three.js r152 ES Module Imports ═══ -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { Flow } from 'three/addons/modifiers/CurveModifier.js';
+
+        let uploadedFile = null;
+        let scene, camera, renderer, controls, spineGroup;
+        let animationId = null;
+
+        // ─── Initialize Events ───
+        document.addEventListener("DOMContentLoaded", () => {
+             const fileInput = document.getElementById("fileInput");
+             const analyzeBtn = document.getElementById("analyzeBtn");
+             const resetBtn = document.querySelector(".vp-btn");
+
+             if (fileInput) fileInput.addEventListener("change", handleFile);
+             if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeXray);
+             if (resetBtn) resetBtn.addEventListener("click", resetView);
+
+             console.log("ScolioAI: Event listeners initialized.");
+        });
+
+        // ─── File Handler ───
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            uploadedFile = file;
+
+            const preview = document.getElementById("xrayPreview");
+            const previewBox = document.getElementById("previewBox");
+            const fileName = document.getElementById("fileName");
+            const fileInfo = document.getElementById("fileInfo");
+            const canvas = document.getElementById("annotationCanvas");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                previewBox.style.display = "block";
+                fileInfo.style.display = "block";
+                fileName.innerText = file.name;
+
+                // Reset canvas
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+            reader.readAsDataURL(file);
+            document.getElementById("analyzeBtn").disabled = false;
+        }
+
+        // ─── Draw AI Detections on X-ray ───
+        function drawAnnotations(data) {
+            const canvas = document.getElementById("annotationCanvas");
+            const img = document.getElementById("xrayPreview");
+
+            // Sync canvas to displayed image size
+            canvas.width = img.clientWidth;
+            canvas.height = img.clientHeight;
+
+            const ctx = canvas.getContext('2d');
+            const scX = canvas.width / data.image_size.width;
+            const scY = canvas.height / data.image_size.height;
+
+            // 1. Draw Fitted Curve
+            if (data.fitted_curve && data.fitted_curve.length > 2) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.moveTo(data.fitted_curve[0].x * scX, data.fitted_curve[0].y * scY);
+                for (let i = 1; i < data.fitted_curve.length; i++) {
+                    ctx.lineTo(data.fitted_curve[i].x * scX, data.fitted_curve[i].y * scY);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 2. Draw Vertebra Points
+            data.spine_points.forEach(p => {
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.arc(p.x * scX, p.y * scY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+        }
+
+        // ═══════════════════════════════════════════════
+        //  PROGRESS RING
+        // ═══════════════════════════════════════════════
+        const RING_CIRCUMFERENCE = 2 * Math.PI * 52;   // r = 52 in the SVG viewBox
+        let progressValue = 0;
+        let trickleTimer = null;
+
+        function setProgress(pct, force = false) {
+            const v = Math.max(0, Math.min(100, pct));
+            // Monotonic unless explicitly reset: the 24 model files finish out
+            // of order, and a ring that walks backwards reads as a glitch.
+            if (!force && v < progressValue) return;
+            progressValue = v;
+
+            const bar = document.getElementById("progressBar");
+            const label = document.getElementById("progressPct");
+            if (bar) bar.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - v / 100);
+            if (label) label.innerText = Math.round(v);
+        }
+
+        function stopTrickle() {
+            if (trickleTimer) clearInterval(trickleTimer);
+            trickleTimer = null;
+        }
+
+        // Ease toward a ceiling while waiting on something that reports no
+        // progress, so the ring never looks stalled. Never reaches the ceiling.
+        function trickleTo(ceiling, stepMs = 200) {
+            stopTrickle();
+            trickleTimer = setInterval(() => {
+                if (progressValue >= ceiling) return stopTrickle();
+                setProgress(progressValue + Math.max(0.35, (ceiling - progressValue) * 0.07));
+            }, stepMs);
+        }
+
+        function resetProgress() {
+            stopTrickle();
+            setProgress(0, true);
+        }
+
+        // ─── Main Analysis Flow ───
+        async function analyzeXray() {
+            if (!uploadedFile) return;
+
+            const btn = document.getElementById("analyzeBtn");
+            const statusPanel = document.getElementById("statusPanel");
+            const emptyState = document.getElementById("emptyState");
+            const container = document.getElementById("three-container-analysis");
+            const resultsCard = document.getElementById("resultsCard");
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner-small" style="display:inline-block"></div> Analyzing...`;
+
+            emptyState.style.display = "none";
+            container.style.display = "block"; // Show container early to prepare scene
+            container.innerHTML = "";
+            resultsCard.style.display = "none";
+            statusPanel.style.display = "flex";
+            resetProgress();
+            // The Roboflow round-trip reports no progress of its own, so creep
+            // toward a ceiling rather than sitting frozen at 0.
+            trickleTo(15);
+
+            if (animationId) cancelAnimationFrame(animationId);
+
+            try {
+                const formData = new FormData();
+                formData.append("image", uploadedFile);
+
+                const hostname = window.location.hostname || "127.0.0.1";
+                const backendUrl = `http://${hostname}:5000`;
+                const response = await fetch(`${backendUrl}/analyze`, { method: "POST", body: formData });
+                if (!response.ok) throw new Error("Analysis engine unavailable.");
+
+                const data = await response.json();
+                stopTrickle();
+                setProgress(20);
+
+                drawAnnotations(data);
+
+                await new Promise(r => setTimeout(r, 600));
+                if (!data.spine_points || data.spine_points.length < 2) {
+                    throw new Error("No spinal curvature detected. Please try a clearer X-ray image.");
+                }
+
+                statusPanel.style.display = "flex";
+
+                await buildClinicalSpine(data);
+                setProgress(100);
+                // let the ring visibly land on 100 before it disappears
+                await new Promise(r => setTimeout(r, 350));
+                statusPanel.style.display = "none";
+
+                document.getElementById("viewportControls").style.display = "flex";
+                resultsCard.style.display = "block";
+
+            } catch (err) {
+                console.error(err);
+                stopTrickle();
+                statusPanel.style.display = "none";
+                emptyState.style.display = "flex";
+                const errorEl = document.getElementById("errorMsg");
+                errorEl.innerText = "❌ Diagnostic Error: " + err.message;
+                errorEl.style.color = "#1e40af";
+                errorEl.style.background = "#eff6ff";
+                errorEl.style.display = "block";
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `🔬 GENERATE 3D VIEW`;
+
+            // Re-center on success
+            if (resetView) resetView();
+        }
+
+        // ═══════════════════════════════════════════════
+        //  1. COORDINATE NORMALIZATION
+        // ═══════════════════════════════════════════════
+        function normalize2DPoint(p, imageSize, scale = 1.0) {
+            // ONE pixel->world factor for both axes, so the spine keeps the
+            // aspect ratio of the X-ray. Mapping x and y each to [-1, 1]
+            // independently stretches every non-square image laterally, which
+            // both splays the vertebrae sideways and inflates the Cobb angle.
+            const pxToWorld = (2 * scale) / imageSize.height;
+            return new THREE.Vector3(
+                (p.x - imageSize.width / 2) * pxToWorld,
+                -(p.y - imageSize.height / 2) * pxToWorld,
+                0
+            );
+        }
+
+        // ═══════════════════════════════════════════════
+        //  2. ANATOMICAL Z-DEPTH (Sagittal Curvature)
+        // ═══════════════════════════════════════════════
+        function getAnatomicalZ(t) {
+            // Cervical lordosis (t: 0.0 - 0.15), Thoracic kyphosis (0.15 - 0.55), Lumbar lordosis (0.55 - 1.0)
+            if (t < 0.15) return -1.5 * Math.sin((t / 0.15) * Math.PI);
+            if (t < 0.55) return 2.8 * Math.sin(((t - 0.15) / 0.4) * Math.PI);
+            return -2.5 * Math.sin(((t - 0.55) / 0.45) * Math.PI);
+        }
+
+        // ═══════════════════════════════════════════════
+        //  3. COBB ANGLE CALCULATION (FIXED)
+        // ═══════════════════════════════════════════════
+        function computeCobbAngle(curve, numSamples = 30) {
+            const tiltAngles = [];
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / (numSamples - 1);
+                const tangent = curve.getTangentAt(t).normalize();
+                // We care about the lateral tilt (X-Y plane)
+                // Tangent (x, y) -> tilt angle from vertical (0, 1)
+                const angleRad = Math.atan2(tangent.x, Math.abs(tangent.y));
+                tiltAngles.push({ t, angle: angleRad });
+            }
+
+            // Find max tilts in opposite directions
+            let maxRight = { angle: 0, t: 0 };
+            let maxLeft = { angle: 0, t: 0 };
+
+            tiltAngles.forEach(entry => {
+                if (entry.angle > maxRight.angle) maxRight = entry;
+                if (entry.angle < maxLeft.angle) maxLeft = entry;
+            });
+
+            let cobbAngleDeg = (Math.abs(maxRight.angle) + Math.abs(maxLeft.angle)) * (180 / Math.PI);
+
+            // Ensure angle is acute and in medical range (0-90)
+            if (cobbAngleDeg > 180) cobbAngleDeg = 360 - cobbAngleDeg;
+            cobbAngleDeg = Math.min(Math.max(cobbAngleDeg, 0), 90);
+
+            return {
+                cobbAngleDeg,
+                isRight: Math.abs(maxRight.angle) > Math.abs(maxLeft.angle),
+                severity: cobbAngleDeg < 10 ? "Normal" : cobbAngleDeg < 25 ? "Mild" : cobbAngleDeg < 45 ? "Moderate" : "Severe"
+            };
+        }
+
+        // ═══════════════════════════════════════════════
+        //  0. VIEWPORT CONTROLS
+        // ═══════════════════════════════════════════════
+        function resetView() {
+            if (!camera || !controls || !spineGroup) return;
+
+            // Dynamically calculate the bounding box of the spineGroup only (not lights)
+            const box = new THREE.Box3().setFromObject(spineGroup);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            cameraZ *= 2.0; // Proper framing distance
+
+            // Set camera further back for clinical overview
+            camera.position.set(center.x, center.y, center.z + cameraZ);
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        // Each analysis builds a fresh scene. Without this the discarded WebGL
+        // context leaks, and browsers cut us off at ~16 -- the viewport would go
+        // blank after a run of X-rays.
+        function disposeRenderers() {
+            if (!renderer) return;
+            renderer.dispose();
+            if (renderer.forceContextLoss) renderer.forceContextLoss();
+            renderer = null;
+        }
+
+        // ═══════════════════════════════════════════════
+        //  4. CLINICAL SPINE RECONSTRUCTION (MAIN)
+        // ═══════════════════════════════════════════════
+        async function buildClinicalSpine(data) {
+            const container = document.getElementById("three-container-analysis");
+            disposeRenderers();
+            container.innerHTML = "";
+            container.style.display = "block";
+
+            // ─── Scene Setup ───
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1120);
+
+            camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 2000);
+            camera.position.set(0, 0, 100);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.screenSpacePanning = true;
+            controls.minDistance = 20;
+            controls.maxDistance = 500;
+
+            // ─── Y-AXIS LOCK (turntable) ───
+            // Pin the polar angle to the equator, so the camera can never leave
+            // the horizontal plane through the orbit target: dragging left or
+            // right spins the spine about its vertical axis, dragging up or
+            // down does nothing. The model can no longer be tipped over, rolled,
+            // or flipped upside down.
+            //
+            // The lateral view is still reachable by spinning 90 deg, so the
+            // sagittal profile (kyphosis / lordosis) stays fully inspectable.
+            controls.minPolarAngle = Math.PI / 2;
+            controls.maxPolarAngle = Math.PI / 2;
+
+            // ─── Powerful Clinical Lighting ───
+            const ambient = new THREE.AmbientLight(0xffffff, 1.5);
+            scene.add(ambient);
+
+            const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+            scene.add(hemi);
+
+            const direct = new THREE.DirectionalLight(0xffffff, 2.0);
+            direct.position.set(20, 20, 50);
+            scene.add(direct);
+
+            // Add a headlight that stays with the camera
+            const headLight = new THREE.PointLight(0xffffff, 1.0);
+            camera.add(headLight);
+            scene.add(camera); // Add camera to scene to use as parent for light
+
+            // ─── Helpers ───
+            // Grid removed per user request
+
+            // ─── 5. GENERATE CURVE FROM NORMALIZED POINTS ───
+            const rawPoints = data.spine_points;
+            const imgSize = data.image_size;
+
+            // Follow the backend's polynomial fit, not the raw detections.
+            // spine_points are per-vertebra centroids straight out of Roboflow
+            // and carry a few px of jitter each; a Catmull-Rom through them
+            // wobbles, which tilts every vertebra off-axis and adds phantom
+            // inflections to the Cobb measurement. fitted_curve is the same
+            // spine already smoothed and evenly resampled.
+            const pathPoints = (data.fitted_curve && data.fitted_curve.length >= 3)
+                ? data.fitted_curve
+                : rawPoints;
+
+            const worldScale = 35;
+            const normalizedPoints = pathPoints.map((p, i) => {
+                const vec = normalize2DPoint(p, imgSize, worldScale);
+                vec.z = getAnatomicalZ(i / (pathPoints.length - 1)) * 2; // Apply Sagittal Z
+                return vec;
+            });
+
+            // Curve must run superior -> inferior; the orientation frame below
+            // derives "up" from the negated tangent.
+            if (normalizedPoints[0].y < normalizedPoints[normalizedPoints.length - 1].y) {
+                normalizedPoints.reverse();
+            }
+
+            // Create smooth spline
+            const spineCurve = new THREE.CatmullRomCurve3(normalizedPoints, false, 'centripetal');
+
+            // ─── 6. LOAD AND ALIGN 24 INDIVIDUAL VERTEBRAE MODELS ───
+            // NOTE: this is only the SET of files to fetch, not their order.
+            // The filenames are not trustworthy -- three are truncated
+            // ("CERVICAL VERT-_" is C3, "LUMBAR VERTE-_" is L3) and the
+            // cervical numbering is scrambled: the file named "CERVICAL
+            // VERT-4" actually sits second from the top in the source CT.
+            // Anatomical order is recovered from the models' own coordinates
+            // after loading (see the sort below).
+            const VERTEBRAE_FILES = [
+                "CERVICAL VERT-1_NIH3D.glb",
+                "CERVICAL VERT-2 _NIH3D.glb",
+                "CERVICAL VERT-_NIH3D.glb",
+                "CERVICAL VERT-4_NIH3D.glb",
+                "CERVICAL VERT-5_NIH3D.glb",
+                "CERVICAL VERT-6 _NIH3D.glb",
+                "CERVICAL VERT-7_NIH3D.glb",
+                "THORACIC VERT-1_NIH3D.glb",
+                "THORACIC VERT-2_NIH3D.glb",
+                "THORACIC VERT-3 _NIH3D.glb",
+                "THORACIC VERT-4_NIH3D.glb",
+                "THORACIC VERT-5 _NIH3D.glb",
+                "THORACIC VERT-6_NIH3D.glb",
+                "THORACIC VERT-7_NIH3D.glb",
+                "THORACIC VERT-8 _NIH3D.glb",
+                "THORACIC VERT-9 _NIH3D.glb",
+                "THORACIC VERT-10 _NIH3D.glb",
+                "THORACIC VERT-11_NIH3D.glb",
+                "THORACIC VERT-12 _NIH3D.glb",
+                "LUMBAR VERTE-1 _NIH3D.glb",
+                "LUMBAR VERTE-2 _NIH3D.glb",
+                "LUMBAR VERTE-_NIH3D.glb",
+                "LUMBAR VERTE-4 _NIH3D.glb",
+                "LUMBAR VERTE-5 _NIH3D.glb"
+            ];
+
+            const loader = new GLTFLoader();
+            try {
+                const hostname = window.location.hostname || "127.0.0.1";
+                const baseUrl = `http://${hostname}:5000/models/vertebrae`;
+
+                // 24 files land out of order, so track each one's byte fraction
+                // and drive the ring off the total. Falls back to a whole-file
+                // step if the server omits Content-Length.
+                const GLB_FROM = 20, GLB_TO = 92;
+                const fileFraction = new Array(VERTEBRAE_FILES.length).fill(0);
+                const pushGlbProgress = () => {
+                    const done = fileFraction.reduce((a, b) => a + b, 0) / fileFraction.length;
+                    setProgress(GLB_FROM + (GLB_TO - GLB_FROM) * done);
+                };
+                setProgress(GLB_FROM);
+
+                const loadPromises = VERTEBRAE_FILES.map((filename, i) => {
+                    return new Promise((res, rej) => {
+                        loader.load(
+                            `${baseUrl}/${encodeURIComponent(filename)}`,
+                            gltf => {
+                                fileFraction[i] = 1;
+                                pushGlbProgress();
+                                res(gltf);
+                            },
+                            ev => {
+                                if (ev && ev.lengthComputable && ev.total > 0) {
+                                    fileFraction[i] = Math.min(1, ev.loaded / ev.total);
+                                    pushGlbProgress();
+                                }
+                            },
+                            err => rej(new Error(`Failed to load ${filename}: ${err.message || err}`))
+                        );
+                    });
+                });
+
+                const gltfs = await Promise.all(loadPromises);
+
+                // ─── 6a. MEASURE EACH MODEL IN ITS NATIVE CT FRAME ───
+                // All 24 NIH3D exports were segmented from ONE CT volume and
+                // still carry that volume's coordinates: native +Z is superior,
+                // native +Y is posterior, and the centroids run from C1 at
+                // z=-170 down to L5 at z=-692. So the models already know their
+                // own anatomical order, spacing and relative size -- that is the
+                // ground truth we align to, rather than filenames or guesswork.
+                const measured = gltfs.map((gltf, i) => {
+                    const root = gltf.scene.clone();
+                    const box = new THREE.Box3().setFromObject(root);
+                    const center = new THREE.Vector3();
+                    const size = new THREE.Vector3();
+                    box.getCenter(center);
+                    box.getSize(size);
+                    return { root, center, size, file: VERTEBRAE_FILES[i] };
+                });
+
+                // Superior -> inferior. This alone repairs the cervical spine:
+                // the on-disk numbering puts C2/C3/C4 in the wrong sequence.
+                measured.sort((a, b) => b.center.z - a.center.z);
+
+                // ─── 6b. NATURAL SPACING, READ OFF THE CT ───
+                // Cumulative centre-to-centre distance from C1. Real spacing is
+                // 11.9 mm at C1-C2 and 35.0 mm at L2-L3 -- a 2.9x range that no
+                // uniform t = i/23 stepping can represent.
+                //
+                // Note we deliberately do NOT use the bounding-box height as the
+                // stacking height. Spinous and transverse processes angle
+                // downward, inflating the AABB to ~1.82x the true inter-vertebral
+                // distance (41.3 mm mean box vs 22.7 mm mean spacing). Forcing
+                // that box to fill one slot is what drove the old layout apart.
+                const nativeOffsets = [0];
+                for (let i = 1; i < measured.length; i++) {
+                    nativeOffsets.push(
+                        nativeOffsets[i - 1] + Math.abs(measured[i - 1].center.z - measured[i].center.z)
+                    );
+                }
+                let nativeSpan = nativeOffsets[nativeOffsets.length - 1];
+
+                // Fallback for model sets that were individually re-centred on
+                // export (every centroid at the origin -> no usable spacing).
+                if (!(nativeSpan > 1e-3)) {
+                    nativeOffsets.length = 0;
+                    let acc = 0;
+                    measured.forEach(m => {
+                        nativeOffsets.push(acc);
+                        acc += (m.size.z || 1) * 0.55; // 1 / 1.82 process inflation
+                    });
+                    nativeSpan = acc - (measured[measured.length - 1].size.z || 1) * 0.55;
+                    console.warn("Vertebra GLBs carry no native spacing; using AABB estimate.");
+                }
+
+                // ─── 6c. ONE GLOBAL SCALE FOR ALL 24 ───
+                // Per-vertebra scaling destroys the very proportions the CT
+                // encodes. A single factor stretches the whole spine onto the
+                // detected curve while cervical stays small and lumbar stays
+                // large, exactly as segmented.
+                const curveLength = spineCurve.getLength();
+                const globalScale = curveLength / nativeSpan;
+
+                const VERTEBRA_LEVELS = [
+                    "C1", "C2", "C3", "C4", "C5", "C6", "C7",
+                    "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12",
+                    "L1", "L2", "L3", "L4", "L5"
+                ];
+
+                spineGroup = new THREE.Group();
+
+                measured.forEach((m, i) => {
+                    const model = m.root;
+                    model.traverse(c => {
+                        if (c.isMesh) {
+                            c.castShadow = true;
+                            c.receiveShadow = true;
+                        }
+                    });
+
+                    // Centre the model on its own centroid, in its OWN frame.
+                    // This must happen before the axis correction: an
+                    // Object3D composes as T * R * S, so setting .position and
+                    // .rotateX() on the same node subtracts an unrotated offset
+                    // from rotated geometry. With centroids hundreds of mm from
+                    // the CT origin that threw each vertebra a different large
+                    // distance off the curve -- the main reason the old build
+                    // scattered instead of stacking.
+                    model.position.sub(m.center);
+
+                    // Native CT frame is Z-up. -90 deg about X maps
+                    // +Z (superior) -> +Y (up) and +Y (posterior) -> -Z, so
+                    // anterior faces the default camera at +Z: the AP view.
+                    const pivot = new THREE.Group();
+                    pivot.rotateX(-Math.PI / 2);
+                    pivot.add(model);
+
+                    const wrapper = new THREE.Group();
+                    wrapper.scale.setScalar(globalScale);
+                    wrapper.add(pivot);
+
+                    // Arc-length placement from the model's own offset.
+                    // getPointAt/getTangentAt take an arc-length-normalised u,
+                    // so equal u steps are equal distances along the spine.
+                    const u = THREE.MathUtils.clamp(nativeOffsets[i] / nativeSpan, 0, 1);
+                    wrapper.position.copy(spineCurve.getPointAt(u));
+
+                    // ─── Anatomical Alignment ───
+                    // Curve runs superior -> inferior, so up = -tangent.
+                    const tangent = spineCurve.getTangentAt(u).normalize();
+                    const upVec = tangent.clone().negate();
+                    const frontVec = new THREE.Vector3(0, 0, 1);
+
+                    const rightVec = new THREE.Vector3().crossVectors(upVec, frontVec);
+                    if (rightVec.lengthSq() < 1e-6) {
+                        // up is parallel to front: pick any other reference axis
+                        frontVec.set(0, 1, 0);
+                        rightVec.crossVectors(upVec, frontVec);
+                    }
+                    rightVec.normalize();
+                    const correctedFront = new THREE.Vector3().crossVectors(rightVec, upVec).normalize();
+
+                    // Rotation basis [Right, Up, Front]
+                    const basisMatrix = new THREE.Matrix4().makeBasis(rightVec, upVec, correctedFront);
+                    wrapper.quaternion.setFromRotationMatrix(basisMatrix);
+
+                    wrapper.name = VERTEBRA_LEVELS[i] || `V${i}`;
+                    wrapper.userData.sourceFile = m.file;
+                    wrapper.userData.u = u;
+                    wrapper.userData.nativeZ = m.center.z;
+                    spineGroup.add(wrapper);
+                });
+
+                scene.add(spineGroup);
+                setProgress(96);
+
+                // ─── 6d. REPORT VERTEBRA COORDINATES TO THE CONSOLE ───
+                spineGroup.updateMatrixWorld(true);
+
+                const worldPos = new THREE.Vector3();
+                const coords = spineGroup.children.map(w => {
+                    w.getWorldPosition(worldPos);
+                    return {
+                        level: w.name,
+                        x: +worldPos.x.toFixed(2),
+                        y: +worldPos.y.toFixed(2),
+                        z: +worldPos.z.toFixed(2),
+                        u: +w.userData.u.toFixed(4),
+                        "nativeZ (mm)": +w.userData.nativeZ.toFixed(1),
+                        file: w.userData.sourceFile
+                    };
+                });
+
+                const spineBox = new THREE.Box3().setFromObject(spineGroup);
+                const spineSize = new THREE.Vector3();
+                const spineCentre = new THREE.Vector3();
+                spineBox.getSize(spineSize);
+                spineBox.getCenter(spineCentre);
+
+                const fmt = v => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
+
+                console.group(`🦴 Spine reconstruction — ${coords.length} vertebrae @ scale ${globalScale.toFixed(5)}`);
+                console.table(coords);
+                console.log(`curve  length ${curveLength.toFixed(2)} u from ${normalizedPoints.length} path points`);
+                console.log(`bounds min ${fmt(spineBox.min)}   max ${fmt(spineBox.max)}`);
+                console.log(`size   ${fmt(spineSize)}   centre ${fmt(spineCentre)}`);
+                console.log(`axes   +X right · +Y superior · +Z anterior (toward camera)`);
+                console.log(`hover any vertebra in the viewport for its live coordinates`);
+                console.log(`live handle: window.spineDebug  —  .at("T7") · .hover · .trace(true)`);
+                console.groupEnd();
+
+                // Handle for inspecting the reconstruction from the console.
+                window.spineDebug = {
+                    coords,
+                    spineGroup,
+                    spineCurve,
+                    globalScale,
+                    curveLength,
+                    // World position of one level: spineDebug.at("T7")
+                    at: level => spineGroup.getObjectByName(level)
+                        ?.getWorldPosition(new THREE.Vector3()),
+                    // Sample the fitted spine path: spineDebug.sample(0.5)
+                    sample: u => spineCurve.getPointAt(THREE.MathUtils.clamp(u, 0, 1)),
+                    // Turntable lock: spineDebug.lockY(false) frees vertical orbit
+                    lockY: on => {
+                        controls.minPolarAngle = on ? Math.PI / 2 : 0;
+                        controls.maxPolarAngle = on ? Math.PI / 2 : Math.PI;
+                        controls.update();
+                        return `Y axis ${on ? "locked (turntable)" : "free"}`;
+                    },
+                    // Live pointer readout, refreshed every frame the mouse moves
+                    hover: null,
+                    // spineDebug.trace(true) -> log every move, not just level changes
+                    trace: on => { traceEvery = !!on; return `trace ${on ? "on" : "off"}`; }
+                };
+
+                // ─── 6e. LIVE HOVER READOUT ───
+                // The reconstruction is static: orbiting moves the camera, not
+                // the bones, so a vertebra's world position never changes after
+                // the build. What genuinely varies per frame is which vertebra
+                // is under the pointer and where on its surface -- so that is
+                // what we track. The listener sits on the renderer canvas,
+                // which is thrown away on the next analysis, so handlers do not
+                // accumulate across runs.
+                const raycaster = new THREE.Raycaster();
+                const pointer = new THREE.Vector2();
+                const centreWorld = new THREE.Vector3();
+                let hoveredName = null;
+                let traceEvery = false;
+                let pendingEvent = null;
+                let rafQueued = false;
+
+                // Walk up from the hit mesh to the per-vertebra wrapper.
+                function vertebraAncestor(obj) {
+                    let n = obj;
+                    while (n && n.parent !== spineGroup) n = n.parent;
+                    return n;
+                }
+
+                function readHover(ev) {
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+                    pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+
+                    raycaster.setFromCamera(pointer, camera);
+                    const hits = raycaster.intersectObject(spineGroup, true);
+
+                    if (!hits.length) {
+                        renderer.domElement.style.cursor = "";
+                        window.spineDebug.hover = null;
+                        if (hoveredName !== null) {
+                            hoveredName = null;
+                            console.log("🦴 hover: —");
+                        }
+                        return;
+                    }
+
+                    const wrapper = vertebraAncestor(hits[0].object);
+                    if (!wrapper) return;
+                    renderer.domElement.style.cursor = "crosshair";
+                    wrapper.getWorldPosition(centreWorld);
+
+                    const p = hits[0].point;
+                    const r = v => ({ x: +v.x.toFixed(2), y: +v.y.toFixed(2), z: +v.z.toFixed(2) });
+
+                    // Always current, queryable at any instant from the console.
+                    window.spineDebug.hover = {
+                        level: wrapper.name,
+                        centre: r(centreWorld),
+                        surface: r(p),
+                        distance: +hits[0].distance.toFixed(2),
+                        u: +wrapper.userData.u.toFixed(4),
+                        file: wrapper.userData.sourceFile
+                    };
+
+                    // Print on level change only, unless tracing is switched on
+                    // -- a line per mousemove buries the console otherwise.
+                    if (wrapper.name === hoveredName && !traceEvery) return;
+                    hoveredName = wrapper.name;
+                    console.log(
+                        `🦴 ${wrapper.name.padEnd(3)}` +
+                        ` centre (${centreWorld.x.toFixed(2)}, ${centreWorld.y.toFixed(2)}, ${centreWorld.z.toFixed(2)})` +
+                        `  surface (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})` +
+                        `  ${hits[0].distance.toFixed(1)}u from camera  ${wrapper.userData.sourceFile}`
+                    );
+                }
+
+                // Coalesce to at most one raycast per rendered frame; pointermove
+                // fires far faster than that and each test walks real geometry.
+                renderer.domElement.addEventListener("pointermove", ev => {
+                    pendingEvent = ev;
+                    if (rafQueued) return;
+                    rafQueued = true;
+                    requestAnimationFrame(() => {
+                        rafQueued = false;
+                        if (pendingEvent) readHover(pendingEvent);
+                    });
+                });
+
+                renderer.domElement.addEventListener("pointerleave", () => {
+                    pendingEvent = null;
+                    renderer.domElement.style.cursor = "";
+                    window.spineDebug.hover = null;
+                    if (hoveredName !== null) {
+                        hoveredName = null;
+                        console.log("🦴 hover: —");
+                    }
+                });
+
+                // --- 7. FIX COBB ANGLE AND UI ---
+                const cobbResult = computeCobbAngle(spineCurve);
+                document.getElementById("cobbValue").innerText = cobbResult.cobbAngleDeg.toFixed(1);
+                document.getElementById("vertebraCount").innerText = data.total_filtered || rawPoints.length;
+
+                const badge = document.getElementById("severityBadge");
+                badge.className = "metric-badge badge-" + cobbResult.severity.toLowerCase();
+                badge.innerText = cobbResult.severity;
+
+                document.getElementById("curveType").innerText = cobbResult.isRight ? "Dextroscoliosis (Right)" : "Levoscoliosis (Left)";
+
+                // --- 8. CAMERA CENTERING ---
+                resetView();
+
+
+
+            } catch (err) {
+                console.error("Model Error:", err);
+                throw new Error("Failed to load 3D assets: " + err.message);
+            }
+
+            // --- 9. INITIAL VIEW ---
+            resetView();
+
+            // ─── Animation Loop ───
+            function animate() {
+                animationId = requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        window.addEventListener("resize", () => {
+            if (!camera || !renderer) return;
+            const container = document.getElementById("three-container-analysis");
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
+
+</body>
+
+</html>
