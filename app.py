@@ -4,6 +4,7 @@ from inference_sdk import InferenceHTTPClient
 import os
 import numpy as np
 from PIL import Image
+from cobb_service import get_cobb_engine
 
 UPLOAD_FOLDER = "uploads"
 GLB_FOLDER = os.path.join(os.path.dirname(__file__), "spine glb")
@@ -18,6 +19,14 @@ client = InferenceHTTPClient(
     api_url="https://serverless.roboflow.com",
     api_key="wC8micD3mh1ekXVn0kTz"
 )
+
+# Pre-initialize the Cobb Angle & Hybrid QSVM Engine at startup
+try:
+    cobb_engine = get_cobb_engine()
+    print("Cobb Angle MLP + Hybrid Quantum Kernel SVM Engine loaded successfully.")
+except Exception as e:
+    print(f"Warning: Could not pre-load Cobb Angle Engine: {e}")
+    cobb_engine = None
 
 @app.route("/")
 def home():
@@ -56,17 +65,25 @@ def analyze():
     img = Image.open(filepath)
     img_width, img_height = img.size
 
-    result = client.run_workflow(
-        workspace_name="acoustics-workspace",
-        workflow_id="custom-workflow-2",
-        images={"image": filepath},
-        use_cache=True
-    )
-    
-    print(f"Roboflow raw response: {result}")
-    
-    # Robust detection extraction
+    # Run Cobb Angle MLP Regression + Hybrid Quantum Kernel SVM + CV Centerline Analysis
+    cobb_analysis = None
     try:
+        engine = cobb_engine or get_cobb_engine()
+        cobb_analysis = engine.predict(filepath)
+        print(f"Cobb ML + QSVM Analysis: { {k: v for k, v in cobb_analysis.items() if k != 'cv_analysis'} }")
+    except Exception as e:
+        print(f"Error running Cobb Angle ML Engine: {e}")
+
+    detections = []
+    try:
+        result = client.run_workflow(
+            workspace_name="acoustics-workspace",
+            workflow_id="custom-workflow-2",
+            images={"image": filepath},
+            use_cache=True
+        )
+        print(f"Roboflow raw response: {result}")
+
         # Check if result is a list (standard workflow output)
         if isinstance(result, list) and len(result) > 0:
             item = result[0]
@@ -76,17 +93,12 @@ def analyze():
                     detections = predictions_obj
                 else:
                     detections = predictions_obj.get("predictions", [])
-            else:
-                detections = []
         elif isinstance(result, dict):
-            # Try common Roboflow keys
             detections = result.get("predictions", [])
             if isinstance(detections, dict):
                 detections = detections.get("predictions", [])
-        else:
-            detections = []
     except Exception as e:
-        print(f"Error extracting detections: {e}")
+        print(f"Error extracting Roboflow detections: {e}")
         detections = []
 
     total_raw = len(detections)
@@ -161,13 +173,21 @@ def analyze():
             {"x": round(float(x_smooth[i]), 1), "y": round(float(y_smooth[i]), 1)}
             for i in range(len(y_smooth))
         ]
+    elif cobb_analysis and cobb_analysis.get("cv_analysis"):
+        # Fallback to CLAHE + Savitzky-Golay centerline from Scoliosis_Cobb_Angle_Estimation.ipynb
+        cv_data = cobb_analysis["cv_analysis"]
+        if len(raw_points) < 2 and cv_data.get("sampled_points"):
+            raw_points = cv_data["sampled_points"]
+        if not fitted_points and cv_data.get("fitted_curve"):
+            fitted_points = cv_data["fitted_curve"]
 
     return jsonify({
         "spine_points": raw_points,
         "fitted_curve": fitted_points,
         "image_size": {"width": img_width, "height": img_height},
         "total_raw": total_raw,
-        "total_filtered": len(raw_points)
+        "total_filtered": len(raw_points),
+        "cobb_analysis": cobb_analysis
     })
 
 if __name__ == "__main__":

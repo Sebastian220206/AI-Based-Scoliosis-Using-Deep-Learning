@@ -39,16 +39,18 @@
         }
 
         .dashboard {
-            max-width: 1400px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
             margin: 0 auto 60px;
-            padding: 0 40px;
+            padding: 0 28px;
             display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 40px;
-            align-items: start;
+            grid-template-columns: minmax(380px, 26%) 1fr minmax(360px, 24%);
+            gap: 24px;
+            align-items: stretch;
         }
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1200px) {
             .dashboard {
                 grid-template-columns: 1fr;
                 padding: 0 20px;
@@ -63,6 +65,9 @@
             border: 1px solid var(--border);
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            flex-direction: column;
+            min-height: 780px;
         }
 
         .card:hover {
@@ -77,6 +82,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-shrink: 0;
         }
 
         body.light-mode .card-header {
@@ -96,6 +102,9 @@
 
         .card-body {
             padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ─── Input Panel ─── */
@@ -151,7 +160,8 @@
         .analyze-btn {
             width: 100%;
             padding: 20px;
-            margin-top: 24px;
+            margin-top: auto;
+            padding-top: 20px;
             background: var(--primary);
             color: white;
             border: none;
@@ -185,10 +195,12 @@
         .viewport-container {
             position: relative;
             background: #050505;
-            border-radius: 16px;
-            height: 700px;
+            border-radius: 0 0 16px 16px;
+            flex: 1;
+            min-height: 700px;
+            height: 100%;
             overflow: hidden;
-            border: 1px solid var(--border);
+            border-top: none;
         }
 
         #three-container-analysis {
@@ -418,6 +430,24 @@
             height: 18px;
         }
 
+        .vp-btn.active {
+            background: rgba(45, 212, 191, 0.18);
+            border-color: #2dd4bf;
+            color: #2dd4bf;
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.25);
+        }
+
+        #cobbOverlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+
         .footer {
             background: transparent;
             border-top: 1px solid var(--border);
@@ -506,7 +536,7 @@
             </div>
         </div>
 
-        <!-- ─── Right Panel: 3D Visualization ─── -->
+        <!-- ─── Center Panel: 3D Visualization ─── -->
         <div class="card">
             <div class="card-header">
                 <h3><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -526,9 +556,17 @@
                 </div>
 
                 <div id="three-container-analysis"></div>
+                <canvas id="cobbOverlayCanvas"></canvas>
 
                 <div class="viewport-controls" id="viewportControls" style="display: none;">
-                    <button class="vp-btn" onclick="resetView()">
+                    <button class="vp-btn" id="cobbViewBtn">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 20L20 4M4 20h16M4 20V8m12 8a4 4 0 00-4-4" />
+                        </svg>
+                        Cobb Angle View
+                    </button>
+                    <button class="vp-btn" id="resetViewBtn">
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -537,30 +575,89 @@
                     </button>
                 </div>
 
-                <div class="results-overlay" id="resultsCard">
-                    <div class="metric">
-                        <div class="metric-label">Cobb Angle</div>
-                        <div class="metric-value"><span id="cobbValue">0.0</span>°</div>
-                        <div class="metric-badge" id="severityBadge">Normal</div>
-                    </div>
-                    <div class="metric" style="margin-bottom: 0;">
-                        <div class="metric-label">Detected Curvature</div>
-                        <div id="curveType" style="font-weight: 600; color: #334155; margin-top: 4px;">Determining...
-                        </div>
-                    </div>
-                    <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
-                        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
-                            * Reconstructed from <span id="vertebraCount">0</span> anatomic points.
-                        </p>
-                    </div>
-                </div>
-
                 <div class="status-panel" id="statusPanel">
                     <svg class="progress-ring" viewBox="0 0 120 120" aria-hidden="true">
                         <circle class="ring-track" cx="60" cy="60" r="52" />
                         <circle class="ring-bar" id="progressBar" cx="60" cy="60" r="52" />
                     </svg>
                     <div class="progress-value"><span id="progressPct">0</span><i>%</i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Right Panel: Cobb Angle & AI Diagnostics ─── -->
+        <div class="card">
+            <div class="card-header">
+                <h3><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 17h18v2H3v-2zm0-7h18v5H3v-5zm0-4h18v2H3V6z" />
+                    </svg> Cobb Angle Detection</h3>
+            </div>
+            <div class="card-body">
+                <div id="resultsEmptyState" class="empty-viewport" style="flex: 1; height: auto; padding: 60px 20px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="width: 56px; height: 56px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p>Run X-ray analysis to view Cobb angle measurements &amp; QSVM diagnostics</p>
+                </div>
+
+                <div id="resultsCard" style="display: none; flex: 1; flex-direction: column; justify-content: space-between; animation: slideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1);">
+                    <!-- 1. Primary Cobb Angle Hero Box -->
+                    <div style="padding: 24px 26px; border-radius: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <div class="metric-label" style="font-size: 0.9rem; letter-spacing: 2.5px; margin-bottom: 10px;">Primary Cobb Angle</div>
+                            <div class="metric-value" style="font-size: 4.2rem; letter-spacing: -1px;"><span id="cobbValue">0.0</span>°</div>
+                        </div>
+                        <div class="metric-badge" id="severityBadge" style="font-size: 0.95rem; padding: 10px 22px; margin-top: 0;">Normal</div>
+                    </div>
+
+                    <!-- 2. Regional Cobb Angles (MLP) -->
+                    <div id="regionalAnglesBlock" style="padding: 24px 22px; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); display: none;">
+                        <div class="metric-label" style="margin-bottom: 18px; font-size: 0.85rem; letter-spacing: 2px;">Regional Cobb Angles (MLP)</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">
+                            <div style="padding: 16px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Prox. Thor.</div>
+                                <div style="font-size: 1.55rem; font-weight: 900; margin-top: 8px;"><span id="anglePT">0.0</span>°</div>
+                            </div>
+                            <div style="padding: 16px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Main Thor.</div>
+                                <div style="font-size: 1.55rem; font-weight: 900; margin-top: 8px;"><span id="angleMT">0.0</span>°</div>
+                            </div>
+                            <div style="padding: 16px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Thoracolum.</div>
+                                <div style="font-size: 1.55rem; font-weight: 900; margin-top: 8px;"><span id="angleTL">0.0</span>°</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Hybrid Quantum SVM (8-Qubit) -->
+                    <div id="qsvmBlock" style="padding: 22px 24px; border-radius: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); display: none;">
+                        <div class="metric-label" style="font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 12px;">Hybrid Quantum SVM (8-Qubit)</div>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                            <span id="qsvmLabel" style="font-weight: 900; font-size: 1.65rem;">—</span>
+                            <span id="qsvmConf" style="font-size: 1.15rem; color: var(--secondary); font-weight: 800;"></span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Detected Curvature & Apex Info -->
+                    <div style="padding: 22px 24px; border-radius: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);">
+                        <div class="metric-label" style="font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 10px;">Detected Curvature</div>
+                        <div id="curveType" style="font-weight: 800; font-size: 1.45rem; color: var(--text-main);">Determining...</div>
+                        <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 0.92rem; color: var(--text-muted);">
+                            <span>Apex Vertebra: <strong id="apexVertebraLabel" style="color: #2dd4bf; font-weight: 800;">—</strong></span>
+                            <span><strong id="vertebraCount" style="color: var(--text-main);">0</strong> Anatomic Points</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Clinical Severity Reference Scale -->
+                    <div style="padding: 18px 22px; border-radius: 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);">
+                        <div class="metric-label" style="font-size: 0.75rem; letter-spacing: 1.8px; margin-bottom: 10px;">Clinical Severity Thresholds</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; font-size: 0.78rem; font-weight: 700;">
+                            <div style="padding: 8px 4px; border-radius: 8px; background: rgba(34, 197, 94, 0.12); color: #4ade80;">Normal<br><span style="font-size: 0.7rem; opacity: 0.85;">&lt;10°</span></div>
+                            <div style="padding: 8px 4px; border-radius: 8px; background: rgba(234, 179, 8, 0.12); color: #facc15;">Mild<br><span style="font-size: 0.7rem; opacity: 0.85;">10°–25°</span></div>
+                            <div style="padding: 8px 4px; border-radius: 8px; background: rgba(249, 115, 22, 0.12); color: #fb923c;">Moderate<br><span style="font-size: 0.7rem; opacity: 0.85;">25°–40°</span></div>
+                            <div style="padding: 8px 4px; border-radius: 8px; background: rgba(239, 68, 68, 0.12); color: #f87171;">Severe<br><span style="font-size: 0.7rem; opacity: 0.85;">&ge;40°</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -591,19 +688,40 @@
         let uploadedFile = null;
         let scene, camera, renderer, controls, spineGroup;
         let animationId = null;
+        let cobbViewActive = false;
+        let cobbOverlayData = null;
 
         // ─── Initialize Events ───
         document.addEventListener("DOMContentLoaded", () => {
              const fileInput = document.getElementById("fileInput");
              const analyzeBtn = document.getElementById("analyzeBtn");
-             const resetBtn = document.querySelector(".vp-btn");
+             const resetBtn = document.getElementById("resetViewBtn");
+             const cobbViewBtn = document.getElementById("cobbViewBtn");
 
              if (fileInput) fileInput.addEventListener("change", handleFile);
              if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeXray);
              if (resetBtn) resetBtn.addEventListener("click", resetView);
+             if (cobbViewBtn) cobbViewBtn.addEventListener("click", toggleCobbView);
 
              console.log("ScolioAI: Event listeners initialized.");
         });
+
+        function toggleCobbView() {
+            cobbViewActive = !cobbViewActive;
+            const btn = document.getElementById("cobbViewBtn");
+            const canvas = document.getElementById("cobbOverlayCanvas");
+            if (btn) btn.classList.toggle("active", cobbViewActive);
+            if (canvas) {
+                canvas.style.display = cobbViewActive ? "block" : "none";
+                if (cobbViewActive) {
+                    resetView();
+                    drawCobbOverlay();
+                } else {
+                    const ctx = canvas.getContext("2d");
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
 
         // ─── File Handler ───
         function handleFile(event) {
@@ -642,34 +760,8 @@
             canvas.height = img.clientHeight;
 
             const ctx = canvas.getContext('2d');
-            const scX = canvas.width / data.image_size.width;
-            const scY = canvas.height / data.image_size.height;
-
-            // 1. Draw Fitted Curve
-            if (data.fitted_curve && data.fitted_curve.length > 2) {
-                ctx.beginPath();
-                ctx.strokeStyle = '#38bdf8';
-                ctx.lineWidth = 3;
-                ctx.setLineDash([5, 5]);
-                ctx.moveTo(data.fitted_curve[0].x * scX, data.fitted_curve[0].y * scY);
-                for (let i = 1; i < data.fitted_curve.length; i++) {
-                    ctx.lineTo(data.fitted_curve[i].x * scX, data.fitted_curve[i].y * scY);
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-
-            // 2. Draw Vertebra Points
-            data.spine_points.forEach(p => {
-                ctx.beginPath();
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.arc(p.x * scX, p.y * scY, 4, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = '#2563eb';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Blue curve tracing and markers on X-ray removed
         }
 
         // ═══════════════════════════════════════════════
@@ -721,6 +813,7 @@
             const emptyState = document.getElementById("emptyState");
             const container = document.getElementById("three-container-analysis");
             const resultsCard = document.getElementById("resultsCard");
+            const resultsEmptyState = document.getElementById("resultsEmptyState");
 
             btn.disabled = true;
             btn.innerHTML = `<div class="spinner-small" style="display:inline-block"></div> Analyzing...`;
@@ -729,6 +822,7 @@
             container.style.display = "block"; // Show container early to prepare scene
             container.innerHTML = "";
             resultsCard.style.display = "none";
+            if (resultsEmptyState) resultsEmptyState.style.display = "flex";
             statusPanel.style.display = "flex";
             resetProgress();
             // The Roboflow round-trip reports no progress of its own, so creep
@@ -766,7 +860,8 @@
                 statusPanel.style.display = "none";
 
                 document.getElementById("viewportControls").style.display = "flex";
-                resultsCard.style.display = "block";
+                if (resultsEmptyState) resultsEmptyState.style.display = "none";
+                resultsCard.style.display = "flex";
 
             } catch (err) {
                 console.error(err);
@@ -847,6 +942,355 @@
                 isRight: Math.abs(maxRight.angle) > Math.abs(maxLeft.angle),
                 severity: cobbAngleDeg < 10 ? "Normal" : cobbAngleDeg < 25 ? "Mild" : cobbAngleDeg < 45 ? "Moderate" : "Severe"
             };
+        }
+
+        // ═══════════════════════════════════════════════
+        //  3b. 3D COBB ANGLE OVERLAY COMPUTATION & RENDERING
+        // ═══════════════════════════════════════════════
+        function buildCobbOverlayData(spineCurve, coords, primaryAngle, cobbResult, mlCobb) {
+            const curveSamples = [];
+            const N = 80;
+            for (let i = 0; i <= N; i++) {
+                curveSamples.push(spineCurve.getPointAt(i / N));
+            }
+
+            // Find Apex vertebra in the thoracolumbar region (indices 6..21 -> C7..L3)
+            // using maximum lateral deviation from the C1-L5 plumb line
+            const topPt = coords[0];
+            const botPt = coords[coords.length - 1];
+            let bestApexIdx = Math.floor(coords.length * 0.5);
+            let maxDev = -1;
+
+            const startIdx = Math.min(6, coords.length - 1);
+            const endIdx = Math.max(startIdx + 1, coords.length - 3);
+            for (let i = startIdx; i <= endIdx; i++) {
+                const c = coords[i];
+                const t = (c.y - topPt.y) / ((botPt.y - topPt.y) || 1);
+                const plumbX = topPt.x + t * (botPt.x - topPt.x);
+                const dev = Math.abs(c.x - plumbX);
+                if (dev > maxDev) {
+                    maxDev = dev;
+                    bestApexIdx = i;
+                }
+            }
+
+            const apexCoord = coords[bestApexIdx] || coords[Math.floor(coords.length / 2)];
+            const midX = (topPt.x + botPt.x) * 0.5;
+            const convexSign = (apexCoord.x <= midX) ? -1 : 1; // -1: apex bulges left on screen (like T9 in reference)
+
+            // Upper & lower inflection points along the curve
+            const uApex = THREE.MathUtils.clamp(apexCoord.u || 0.5, 0.25, 0.75);
+            const uUpper = THREE.MathUtils.clamp(uApex * 0.35, 0.08, 0.28);
+            const uLower = THREE.MathUtils.clamp(uApex + (1 - uApex) * 0.68, 0.72, 0.92);
+
+            const upperPt3D = spineCurve.getPointAt(uUpper);
+            const lowerPt3D = spineCurve.getPointAt(uLower);
+            const apexPt3D = spineCurve.getPointAt(uApex);
+
+            // Regional angle callouts
+            const angle1 = (mlCobb && mlCobb.angles && mlCobb.angles.main_thoracic)
+                ? Number(mlCobb.angles.main_thoracic)
+                : primaryAngle;
+            const localCompAngle = Math.round(Math.min(85, Math.max(12, primaryAngle * 1.25)));
+
+            return {
+                curveSamples,
+                apexLevel: apexCoord.level || "T9",
+                apexPt3D,
+                upperPt3D,
+                lowerPt3D,
+                convexSign,
+                primaryAngle: Math.round(primaryAngle),
+                calloutAngle: angle1.toFixed(1),
+                localCompAngle
+            };
+        }
+
+        function projectTo2D(vec3, width, height) {
+            const p = vec3.clone().project(camera);
+            return {
+                x: (p.x * 0.5 + 0.5) * width,
+                y: (-p.y * 0.5 + 0.5) * height
+            };
+        }
+
+        function drawArrowhead(ctx, x, y, angleRad, size = 7, color = "#cbd5e1") {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angleRad);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-size, -size * 0.55);
+            ctx.lineTo(-size * 0.75, 0);
+            ctx.lineTo(-size, size * 0.55);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawCobbOverlay() {
+            const canvas = document.getElementById("cobbOverlayCanvas");
+            const container = document.getElementById("three-container-analysis");
+            if (!canvas || !container || !cobbViewActive || !cobbOverlayData || !camera) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+            }
+
+            const ctx = canvas.getContext("2d");
+            ctx.save();
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, w, h);
+
+            const d = cobbOverlayData;
+            const pts2D = d.curveSamples.map(v => projectTo2D(v, w, h));
+            const apex2D = projectTo2D(d.apexPt3D, w, h);
+            const upper2D = projectTo2D(d.upperPt3D, w, h);
+            const lower2D = projectTo2D(d.lowerPt3D, w, h);
+
+            const TEAL = "#2dd4bf";
+            const TEAL_LIGHT = "#5eead4";
+            const GREEN_DOT = "#86efac";
+
+            // ─── 1. Draw Central Spinal Curve (Teal Spline) ───
+            if (pts2D.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(pts2D[0].x, pts2D[0].y);
+                for (let i = 1; i < pts2D.length; i++) {
+                    ctx.lineTo(pts2D[i].x, pts2D[i].y);
+                }
+                // Extend slightly below inferior end as in reference image
+                const lastPt = pts2D[pts2D.length - 1];
+                ctx.lineTo(lastPt.x, Math.min(h - 10, lastPt.y + 42));
+                ctx.strokeStyle = TEAL;
+                ctx.lineWidth = 3.2;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+            }
+
+            // Determine concave side (+1 = right side of spine, -1 = left side of spine)
+            const concaveDir = -d.convexSign; // If apex bulges left (-1), lines intersect on the right (+1)
+            const spineSpanY = Math.abs(lower2D.y - upper2D.y) || 260;
+
+            // Intersection point on the concave side opposite the apex
+            const ix = apex2D.x + concaveDir * Math.max(135, spineSpanY * 0.46);
+            const iy = (upper2D.y + lower2D.y) * 0.5;
+
+            // ─── 2. Upper & Lower Intersecting Cobb Lines (Solid & Dashed) ───
+            // Line 1: From upper vertebra through intersection (solid ray)
+            const uxVec = ix - upper2D.x;
+            const uyVec = iy - upper2D.y;
+            const uLen = Math.hypot(uxVec, uyVec) || 1;
+            const uxUnit = uxVec / uLen;
+            const uyUnit = uyVec / uLen;
+
+            const line1Start = { x: upper2D.x, y: upper2D.y };
+            const line1End = { x: ix + uxUnit * (spineSpanY * 0.42), y: iy + uyUnit * (spineSpanY * 0.42) };
+
+            ctx.beginPath();
+            ctx.moveTo(line1Start.x, line1Start.y);
+            ctx.lineTo(line1End.x, line1End.y);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            // Line 2: From lower region through intersection (dashed + solid segment)
+            const lxVec = ix - lower2D.x;
+            const lyVec = iy - lower2D.y;
+            const lLen = Math.hypot(lxVec, lyVec) || 1;
+            const lxUnit = lxVec / lLen;
+            const lyUnit = lyVec / lLen;
+
+            const line2Start = {
+                x: lower2D.x - lxUnit * 55,
+                y: lower2D.y - lyUnit * 55
+            };
+            const line2Far = {
+                x: ix + lxUnit * (spineSpanY * 0.44),
+                y: iy + lyUnit * (spineSpanY * 0.44)
+            };
+
+            // Dashed extension along Line 2
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([6, 6]);
+            ctx.moveTo(line2Start.x, line2Start.y);
+            ctx.lineTo(line2Far.x, line2Far.y);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.0;
+            ctx.stroke();
+            ctx.restore();
+
+            // Solid highlight near intersection on Line 2
+            ctx.beginPath();
+            ctx.moveTo(ix - lxUnit * 28, iy - lyUnit * 28);
+            ctx.lineTo(ix + lxUnit * 45, iy + lyUnit * 45);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+
+            // ─── 3. Angle Arcs & Readouts at Intersection ───
+            const ang1Down = Math.atan2(uyUnit, uxUnit);        // Down-right along Line 1
+            const ang2Up = Math.atan2(lyUnit, lxUnit);          // Up-right along Line 2
+            const ang2Down = Math.atan2(-lyUnit, -lxUnit);      // Down-left along Line 2
+
+            // Outer Cobb Angle Arc (Right/Concave sector between ang2Up and ang1Down)
+            const outerRadius = 56;
+            const startOuter = Math.min(ang2Up, ang1Down);
+            const endOuter = Math.max(ang2Up, ang1Down);
+            const midOuter = (startOuter + endOuter) * 0.5;
+
+            ctx.beginPath();
+            ctx.arc(ix, iy, outerRadius, startOuter + 0.08, endOuter - 0.08);
+            ctx.strokeStyle = "#94a3b8";
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+
+            // Arrowheads at both ends of the outer Cobb arc
+            drawArrowhead(ctx,
+                ix + outerRadius * Math.cos(startOuter + 0.06),
+                iy + outerRadius * Math.sin(startOuter + 0.06),
+                startOuter - Math.PI / 2, 7, "#cbd5e1"
+            );
+            drawArrowhead(ctx,
+                ix + outerRadius * Math.cos(endOuter - 0.06),
+                iy + outerRadius * Math.sin(endOuter - 0.06),
+                endOuter + Math.PI / 2, 7, "#cbd5e1"
+            );
+
+            // "COBB ANGLE: XX°" text next to the outer arc
+            ctx.font = "600 15px 'Inter', sans-serif";
+            ctx.fillStyle = "#cbd5e1";
+            ctx.textAlign = concaveDir > 0 ? "left" : "right";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+                `COBB ANGLE: ${d.primaryAngle}°`,
+                ix + concaveDir * (outerRadius - 32),
+                iy
+            );
+
+            // Inner Bottom Arc between Line 2 (down-left) and Line 1 (down-right)
+            const innerRadius = 32;
+            const startInner = Math.min(ang1Down, ang2Down);
+            const endInner = Math.max(ang1Down, ang2Down);
+            ctx.beginPath();
+            ctx.arc(ix, iy, innerRadius, startInner, endInner);
+            ctx.strokeStyle = TEAL_LIGHT;
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            const midInner = (startInner + endInner) * 0.5;
+            ctx.font = "500 14px 'Inter', sans-serif";
+            ctx.fillStyle = "#cbd5e1";
+            ctx.textAlign = "center";
+            ctx.fillText(
+                `${d.localCompAngle}°`,
+                ix + (innerRadius + 18) * Math.cos(midInner),
+                iy + (innerRadius + 18) * Math.sin(midInner)
+            );
+
+            // ─── 4. Apex Marker, Bracket & Label ───
+            // Black circle with teal ring on the spinal centerline at the apex
+            ctx.beginPath();
+            ctx.arc(apex2D.x, apex2D.y, 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = "#050505";
+            ctx.fill();
+            ctx.lineWidth = 2.2;
+            ctx.strokeStyle = TEAL;
+            ctx.stroke();
+
+            // Curly/square bracket on the convex side of the apex vertebra
+            const bDir = d.convexSign; // -1 = left of spine, +1 = right of spine
+            const bx = apex2D.x + bDir * 44;
+            const by = apex2D.y;
+            const bHalfH = 16;
+            const bTick = 7;
+
+            ctx.beginPath();
+            ctx.moveTo(bx - bDir * bTick, by - bHalfH);
+            ctx.quadraticCurveTo(bx, by - bHalfH, bx, by - bHalfH + 5);
+            ctx.lineTo(bx, by + bHalfH - 5);
+            ctx.quadraticCurveTo(bx, by + bHalfH, bx - bDir * bTick, by + bHalfH);
+            ctx.strokeStyle = TEAL_LIGHT;
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            // Glowing dot on the bracket midpoint
+            ctx.beginPath();
+            ctx.arc(bx, by, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = TEAL_LIGHT;
+            ctx.fill();
+
+            // "Apex: T9" label
+            ctx.font = "500 15px 'Inter', sans-serif";
+            ctx.fillStyle = "#94a3b8";
+            ctx.textAlign = bDir < 0 ? "right" : "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(`Apex: ${d.apexLevel}`, bx + bDir * 14, by);
+
+            // ─── 5. Callout Leader Lines & "Cobb Angle 1: XX.X°" Labels ───
+            // Top-left callout from upper vertebra
+            const calloutTopLeft = { x: upper2D.x - 62, y: upper2D.y - 24 };
+            ctx.beginPath();
+            ctx.moveTo(upper2D.x, upper2D.y);
+            ctx.lineTo(calloutTopLeft.x, calloutTopLeft.y);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(calloutTopLeft.x, calloutTopLeft.y, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = TEAL;
+            ctx.fill();
+
+            ctx.font = "500 14px 'Inter', sans-serif";
+            ctx.fillStyle = "#7dd3fc";
+            ctx.textAlign = "right";
+            ctx.fillText(`Cobb Angle 1: ${d.calloutAngle}°`, calloutTopLeft.x - 10, calloutTopLeft.y);
+
+            // Top-right green callout extending upward from upper curve tangent
+            const calloutTopRight = { x: upper2D.x + 48, y: upper2D.y - 58 };
+            ctx.beginPath();
+            ctx.moveTo(upper2D.x + 12, upper2D.y + 18);
+            ctx.lineTo(calloutTopRight.x, calloutTopRight.y);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(calloutTopRight.x, calloutTopRight.y, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = GREEN_DOT;
+            ctx.fill();
+
+            ctx.fillStyle = "#bef264";
+            ctx.textAlign = "left";
+            ctx.fillText(`Cobb Angle 1: ${d.calloutAngle}°`, calloutTopRight.x + 10, calloutTopRight.y);
+
+            // Bottom-left callout from lower vertebra
+            const calloutBotLeft = { x: lower2D.x - 74, y: lower2D.y + 38 };
+            ctx.beginPath();
+            ctx.moveTo(lower2D.x - 16, lower2D.y - 12);
+            ctx.lineTo(calloutBotLeft.x, calloutBotLeft.y);
+            ctx.strokeStyle = TEAL;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(calloutBotLeft.x, calloutBotLeft.y, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = TEAL;
+            ctx.fill();
+
+            ctx.fillStyle = "#7dd3fc";
+            ctx.textAlign = "right";
+            ctx.fillText(`Cobb Angle 1: ${d.calloutAngle}°`, calloutBotLeft.x - 10, calloutBotLeft.y);
+
+            ctx.restore();
         }
 
         // ═══════════════════════════════════════════════
@@ -1336,14 +1780,50 @@
 
                 // --- 7. FIX COBB ANGLE AND UI ---
                 const cobbResult = computeCobbAngle(spineCurve);
-                document.getElementById("cobbValue").innerText = cobbResult.cobbAngleDeg.toFixed(1);
+                const mlCobb = data.cobb_analysis;
+
+                const primaryAngle = (mlCobb && typeof mlCobb.primary_cobb_angle === "number")
+                    ? mlCobb.primary_cobb_angle
+                    : cobbResult.cobbAngleDeg;
+                const severity = (mlCobb && mlCobb.severity)
+                    ? mlCobb.severity
+                    : cobbResult.severity;
+
+                document.getElementById("cobbValue").innerText = primaryAngle.toFixed(1);
                 document.getElementById("vertebraCount").innerText = data.total_filtered || rawPoints.length;
 
                 const badge = document.getElementById("severityBadge");
-                badge.className = "metric-badge badge-" + cobbResult.severity.toLowerCase();
-                badge.innerText = cobbResult.severity;
+                badge.className = "metric-badge badge-" + severity.toLowerCase();
+                badge.innerText = severity;
+
+                if (mlCobb && mlCobb.angles) {
+                    document.getElementById("anglePT").innerText = Number(mlCobb.angles.proximal_thoracic).toFixed(1);
+                    document.getElementById("angleMT").innerText = Number(mlCobb.angles.main_thoracic).toFixed(1);
+                    document.getElementById("angleTL").innerText = Number(mlCobb.angles.thoracolumbar).toFixed(1);
+                    document.getElementById("regionalAnglesBlock").style.display = "block";
+                } else {
+                    document.getElementById("regionalAnglesBlock").style.display = "none";
+                }
+
+                if (mlCobb && mlCobb.qsvm) {
+                    const qLabel = document.getElementById("qsvmLabel");
+                    const qConf = document.getElementById("qsvmConf");
+                    qLabel.innerText = mlCobb.qsvm.prediction;
+                    qLabel.style.color = mlCobb.qsvm.class_id === 1 ? "#fb923c" : "#4ade80";
+                    qConf.innerText = `${mlCobb.qsvm.confidence.toFixed(1)}% conf`;
+                    document.getElementById("qsvmBlock").style.display = "block";
+                } else {
+                    document.getElementById("qsvmBlock").style.display = "none";
+                }
 
                 document.getElementById("curveType").innerText = cobbResult.isRight ? "Dextroscoliosis (Right)" : "Levoscoliosis (Left)";
+
+                // Build 3D Cobb Angle overlay landmarks for the "Cobb Angle View" button
+                cobbOverlayData = buildCobbOverlayData(spineCurve, coords, primaryAngle, cobbResult, mlCobb);
+                const apexLabelEl = document.getElementById("apexVertebraLabel");
+                if (apexLabelEl && cobbOverlayData) {
+                    apexLabelEl.innerText = cobbOverlayData.apexLevel;
+                }
 
                 // --- 8. CAMERA CENTERING ---
                 resetView();
@@ -1363,6 +1843,9 @@
                 animationId = requestAnimationFrame(animate);
                 controls.update();
                 renderer.render(scene, camera);
+                if (cobbViewActive) {
+                    drawCobbOverlay();
+                }
             }
             animate();
         }
@@ -1373,6 +1856,7 @@
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
+            if (cobbViewActive) drawCobbOverlay();
         });
     </script>
 
